@@ -616,7 +616,7 @@ export default function HomeScreen() {
                         <Text style={styles.exerciseName}>🔹 {item.name}</Text>
                         <Text style={styles.exerciseTarget}>{item.sets} • {item.reps}</Text>
                       </View>
-                      <Text style={styles.guideHint}>Panduan ➔</Text>
+                      <Text style={styles.exerciseGuideLink}>📖 Panduan</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -626,38 +626,40 @@ export default function HomeScreen() {
         })}
       </View>
 
-      {/* Modal Panduan Gerakan */}
+      {/* Modal Panduan Detail Gerakan */}
       <Modal
-        animationType="fade"
-        transparent={true}
         visible={activeExercise !== null}
+        transparent={true}
+        animationType="fade"
         onRequestClose={() => setActiveExercise(null)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>📖 Cara Melakukan Gerakan</Text>
-            <Text style={styles.modalExerciseName}>{activeExercise?.name}</Text>
-            
-            <View style={styles.modalBadgeRow}>
-              <View style={styles.modalBadge}>
-                <Text style={styles.modalBadgeText}>Target: {activeExercise?.sets}</Text>
-              </View>
-              <View style={styles.modalBadge}>
-                <Text style={styles.modalBadgeText}>Repetisi: {activeExercise?.reps}</Text>
-              </View>
-            </View>
-
-            <Text style={styles.modalGuideText}>{activeExercise?.guide}</Text>
-
+            <Text style={styles.modalTitle}>📖 Panduan Gerakan</Text>
+            {activeExercise && (
+              <>
+                <Text style={styles.modalExerciseName}>{activeExercise.name}</Text>
+                <Text style={styles.modalExerciseTarget}>🎯 Target: {activeExercise.sets} | {activeExercise.reps}</Text>
+                <View style={styles.modalDivider} />
+                <Text style={styles.modalGuideTitle}>Cara Melakukan:</Text>
+                <Text style={styles.modalGuideText}>{activeExercise.guide}</Text>
+              </>
+            )}
             <TouchableOpacity 
-              style={styles.closeButton} 
+              style={styles.modalCloseButton}
               onPress={() => setActiveExercise(null)}
             >
-              <Text style={styles.closeButtonText}>Tutup</Text>
+              <Text style={styles.modalCloseButtonText}>Tutup</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
+
+      {/* Bagian Footer */}
+      <View style={styles.footerContainer}>
+        <Text style={styles.footerCreated}>Dibuat oleh Rafadhil</Text>
+        <Text style={styles.footerCopyright}>© 2026 Rafadhil. Hak cipta dilindungi.</Text>
+      </View>
     </ScrollView>
   );
 }
@@ -665,94 +667,90 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
-    padding: 20,
+    backgroundColor: '#0f172a',
+    padding: 16,
   },
   toastContainer: {
-    backgroundColor: '#312e81',
-    borderWidth: 1,
-    borderColor: '#6366f1',
+    backgroundColor: '#3b82f6',
     padding: 12,
     borderRadius: 8,
-    marginTop: 15,
-    marginBottom: 5,
+    marginBottom: 16,
     alignItems: 'center',
   },
   toastText: {
-    color: '#e0e7ff',
-    fontSize: 13,
-    fontWeight: '600',
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   header: {
-    marginTop: 15,
-    marginBottom: 15,
+    marginBottom: 20,
+    marginTop: 10,
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: '#f8fafc',
+    marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 13,
-    color: '#34d399',
-    marginTop: 4,
-    fontWeight: '600',
+    fontSize: 14,
+    color: '#94a3b8',
   },
   levelCard: {
-    backgroundColor: '#1e1e24',
-    padding: 14,
+    backgroundColor: '#1e293b',
     borderRadius: 12,
+    padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#312e81',
+    borderColor: '#334155',
   },
   levelCardTitle: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    color: '#cbd5e1',
     marginBottom: 10,
+    fontWeight: '600',
   },
   levelRow: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'space-between',
   },
   levelButton: {
     flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
+    paddingVertical: 10,
+    marginHorizontal: 4,
     borderRadius: 8,
-    backgroundColor: '#121212',
+    backgroundColor: '#0f172a',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#27272a',
+    borderColor: '#475569',
   },
   levelButtonActive: {
-    backgroundColor: '#4f46e5',
-    borderColor: '#6366f1',
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
   },
   levelButtonText: {
-    color: '#a1a1aa',
-    fontSize: 12,
+    color: '#94a3b8',
     fontWeight: '600',
+    fontSize: 14,
   },
   levelButtonTextActive: {
     color: '#ffffff',
   },
   progressCard: {
-    backgroundColor: '#1e1e24',
-    padding: 16,
+    backgroundColor: '#1e293b',
     borderRadius: 12,
+    padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#312e81',
+    borderColor: '#334155',
   },
   tabRow: {
     flexDirection: 'row',
-    backgroundColor: '#121212',
+    marginBottom: 14,
+    backgroundColor: '#0f172a',
     borderRadius: 8,
     padding: 4,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#27272a',
   },
   tabButton: {
     flex: 1,
@@ -761,238 +759,237 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   tabButtonActive: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#334155',
   },
   tabText: {
-    color: '#a1a1aa',
-    fontSize: 11,
+    fontSize: 12,
+    color: '#94a3b8',
     fontWeight: '600',
   },
   tabTextActive: {
-    color: '#ffffff',
+    color: '#f8fafc',
   },
   progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   progressTitle: {
-    color: '#ffffff',
     fontSize: 15,
     fontWeight: 'bold',
+    color: '#f8fafc',
   },
   progressSubtitle: {
-    color: '#a1a1aa',
-    fontSize: 11,
-    marginTop: 2,
+    fontSize: 12,
+    color: '#94a3b8',
   },
   progressPercent: {
-    color: '#34d399',
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#3b82f6',
   },
   progressBarBg: {
     height: 8,
-    backgroundColor: '#27272a',
+    backgroundColor: '#0f172a',
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 12,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#10b981',
+    backgroundColor: '#3b82f6',
     borderRadius: 4,
   },
   badgesRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
-    gap: 4,
   },
   badgeItem: {
-    flex: 1,
-    paddingVertical: 6,
-    borderRadius: 6,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#0f172a',
+    justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    backgroundColor: '#18181b',
-    borderColor: '#27272a',
+    borderColor: '#334155',
   },
   badgeItemDone: {
-    backgroundColor: '#059669',
+    backgroundColor: '#10b981',
     borderColor: '#10b981',
   },
   badgeText: {
-    color: '#71717a',
-    fontSize: 9,
-    fontWeight: '600',
+    fontSize: 10,
+    color: '#94a3b8',
+    fontWeight: 'bold',
   },
   infoSubText: {
-    color: '#a1a1aa',
     fontSize: 11,
-    marginBottom: 12,
+    color: '#64748b',
+    fontStyle: 'italic',
   },
   progressFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#334155',
+    paddingTop: 10,
   },
   motivationText: {
-    color: '#a1a1aa',
-    fontSize: 11,
+    fontSize: 12,
+    color: '#94a3b8',
+    flex: 1,
   },
   resetButton: {
-    backgroundColor: '#27272a',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: '#dc2626',
     borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#3f3f46',
   },
   resetButtonText: {
-    color: '#f87171',
-    fontSize: 10,
-    fontWeight: '600',
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   notifCard: {
-    backgroundColor: '#1e1e24',
-    padding: 16,
+    backgroundColor: '#1e293b',
     borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#312e81',
   },
   notifInfo: {
     flex: 1,
     marginRight: 10,
   },
   notifTitle: {
-    color: '#ffffff',
     fontSize: 15,
     fontWeight: 'bold',
-    marginBottom: 10,
+    color: '#f8fafc',
+    marginBottom: 8,
   },
   notifDetailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    paddingRight: 6,
+    marginBottom: 4,
   },
   notifDetailText: {
-    color: '#d4d4d8',
-    fontSize: 12,
+    fontSize: 13,
+    color: '#cbd5e1',
+    marginRight: 8,
   },
   timeInputRowInline: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   timeInput: {
-    backgroundColor: '#27272a',
-    color: '#ffffff',
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: 6,
-    fontSize: 13,
-    width: 55,
-    textAlign: 'center',
+    backgroundColor: '#0f172a',
     borderWidth: 1,
-    borderColor: '#3f3f46',
+    borderColor: '#475569',
+    borderRadius: 6,
+    color: '#ffffff',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    fontSize: 13,
+    width: 60,
+    textAlign: 'center',
   },
   notifWib: {
-    color: '#888888',
     fontSize: 12,
-    marginLeft: 6,
+    color: '#94a3b8',
+    marginLeft: 4,
   },
   notifDetailRest: {
     marginTop: 4,
   },
   notifRestText: {
-    color: '#fbbf24',
     fontSize: 12,
+    color: '#fbbf24',
     fontWeight: '600',
   },
   notifRestTime: {
-    color: '#9ca3af',
-    fontSize: 10,
-    marginTop: 2,
+    fontSize: 11,
+    color: '#94a3b8',
   },
   notifButton: {
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   notifButtonActive: {
-    backgroundColor: '#ef4444',
+    backgroundColor: '#dc2626',
   },
   notifButtonInactive: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#10b981',
   },
   notifButtonText: {
     color: '#ffffff',
-    fontWeight: '600',
+    fontWeight: 'bold',
     fontSize: 13,
   },
   section: {
-    marginBottom: 40,
+    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#ffffff',
+    fontWeight: 'bold',
+    color: '#f8fafc',
     marginBottom: 12,
   },
   cardContainer: {
-    marginBottom: 12,
+    marginBottom: 10,
   },
   card: {
-    backgroundColor: '#1e1e1e',
-    padding: 16,
+    backgroundColor: '#1e293b',
     borderRadius: 12,
+    padding: 14,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    borderLeftWidth: 4,
-    borderLeftColor: '#4f46e5',
+    borderWidth: 1,
+    borderColor: '#334155',
   },
   cardActive: {
-    backgroundColor: '#262626',
-    borderLeftColor: '#10b981',
+    borderColor: '#3b82f6',
+    backgroundColor: '#1e293b',
   },
   cardCompleted: {
     backgroundColor: '#064e3b',
-    borderLeftColor: '#34d399',
+    borderColor: '#10b981',
   },
   cardRest: {
-    backgroundColor: '#231f10',
-    borderLeftColor: '#fbbf24',
+    backgroundColor: '#451a03',
+    borderColor: '#d97706',
   },
   dayText: {
-    color: '#ffffff',
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    color: '#f8fafc',
+    marginBottom: 2,
   },
   statusText: {
-    color: '#888888',
     fontSize: 12,
-    marginTop: 2,
+    color: '#94a3b8',
   },
   cardRightAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    alignItems: 'flex-end',
   },
   checkButton: {
-    paddingVertical: 6,
+    paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 6,
+    marginBottom: 6,
   },
   checkButtonUndone: {
-    backgroundColor: '#27272a',
+    backgroundColor: '#334155',
   },
   checkButtonDone: {
     backgroundColor: '#059669',
@@ -1000,45 +997,41 @@ const styles = StyleSheet.create({
   checkButtonText: {
     color: '#ffffff',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   arrowText: {
-    color: '#ffffff',
-    fontSize: 14,
-    marginLeft: 4,
+    color: '#94a3b8',
+    fontSize: 12,
   },
   exerciseList: {
-    backgroundColor: '#18181b',
-    padding: 12,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
+    backgroundColor: '#0f172a',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 6,
     borderWidth: 1,
-    borderColor: '#27272a',
-    borderTopWidth: 0,
+    borderColor: '#334155',
   },
   exerciseItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#27272a',
+    borderBottomColor: '#1e293b',
   },
   exerciseName: {
-    color: '#e4e4e7',
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#e2e8f0',
+    fontWeight: '600',
+    marginBottom: 2,
   },
   exerciseTarget: {
-    color: '#34d399',
     fontSize: 11,
-    marginTop: 2,
-    fontWeight: '600',
+    color: '#94a3b8',
   },
-  guideHint: {
-    color: '#818cf8',
-    fontSize: 12,
+  exerciseGuideLink: {
+    fontSize: 11,
+    color: '#3b82f6',
     fontWeight: '600',
   },
   modalOverlay: {
@@ -1049,60 +1042,79 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#1e1e24',
+    backgroundColor: '#1e293b',
+    borderRadius: 16,
+    padding: 20,
     width: '100%',
     maxWidth: 400,
-    padding: 24,
-    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#3f3f46',
+    borderColor: '#334155',
   },
   modalTitle: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textTransform: 'uppercase',
-    fontWeight: '600',
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#f8fafc',
+    marginBottom: 10,
+    textAlign: 'center',
   },
   modalExerciseName: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: '#3b82f6',
+    marginBottom: 4,
+  },
+  modalExerciseTarget: {
+    fontSize: 12,
+    color: '#94a3b8',
     marginBottom: 12,
   },
-  modalBadgeRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
+  modalDivider: {
+    height: 1,
+    backgroundColor: '#334155',
+    marginBottom: 12,
   },
-  modalBadge: {
-    backgroundColor: '#27272a',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#3f3f46',
-  },
-  modalBadgeText: {
-    color: '#34d399',
-    fontSize: 12,
-    fontWeight: '600',
+  modalGuideTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#e2e8f0',
+    marginBottom: 6,
   },
   modalGuideText: {
-    fontSize: 14,
-    color: '#d4d4d8',
-    lineHeight: 22,
-    marginBottom: 24,
+    fontSize: 13,
+    color: '#cbd5e1',
+    lineHeight: 18,
+    marginBottom: 20,
   },
-  closeButton: {
-    backgroundColor: '#4f46e5',
-    paddingVertical: 12,
-    borderRadius: 10,
+  modalCloseButton: {
+    backgroundColor: '#3b82f6',
+    paddingVertical: 10,
+    borderRadius: 8,
     alignItems: 'center',
   },
-  closeButtonText: {
+  modalCloseButtonText: {
     color: '#ffffff',
-    fontWeight: '600',
-    fontSize: 15,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  footerContainer: {
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#2d3748',
+  },
+  footerCreated: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#f8fafc',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  footerCopyright: {
+    fontSize: 12,
+    color: '#94a3b8',
   },
 });
