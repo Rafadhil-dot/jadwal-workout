@@ -314,13 +314,24 @@ export default function HomeScreen() {
             return;
           }
 
+          // Wajib membuat Notification Channel khusus Android agar tidak error
+          if (Platform.OS === 'android') {
+            await Notifications.setNotificationChannelAsync('default', {
+              name: 'Workout Reminder',
+              importance: Notifications.AndroidImportance.MAX,
+              vibrationPattern: [0, 250, 250, 250],
+              lightColor: '#3b82f6',
+              sound: 'default',
+            });
+          }
+
           const [hourStr, minuteStr] = reminderTime.split(':');
           const workHour = parseInt(hourStr, 10);
           const workMinute = parseInt(minuteStr, 10);
 
           await Notifications.cancelAllScheduledNotificationsAsync();
 
-          // Workout Senin - Jumat
+          // Workout Senin - Jumat (Berulang otomatis setiap minggu)
           const workoutWeekdays = [2, 3, 4, 5, 6];
           for (const weekday of workoutWeekdays) {
             await Notifications.scheduleNotificationAsync({
@@ -333,7 +344,7 @@ export default function HomeScreen() {
             });
           }
 
-          // Rest Day Sabtu & Minggu jam 05:00
+          // Rest Day Sabtu & Minggu jam 05:00 (Berulang otomatis setiap minggu)
           const restWeekdays = [7, 1];
           for (const weekday of restWeekdays) {
             await Notifications.scheduleNotificationAsync({
@@ -347,7 +358,7 @@ export default function HomeScreen() {
           }
 
           setIsNotifActive(true);
-          showToast("🔔 Pengingat HP & Rest Day Aktif Otomatis!");
+          showToast("🔔 Pengingat HP & Rest Day Aktif Berulang Otomatis!");
         } catch (error) {
           console.error("Gagal menjadwalkan notifikasi HP:", error);
           showToast("❌ Gagal menyetel pengingat.");
