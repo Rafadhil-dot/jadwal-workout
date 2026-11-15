@@ -176,7 +176,7 @@ const workoutDataByLevel = {
   }
 };
 
-const STORAGE_KEY = 'jadwal_workout_data_v14';
+const STORAGE_KEY = 'jadwal_workout_data_v15';
 
 export default function HomeScreen() {
   const [selectedLevel, setSelectedLevel] = useState<'Pemula' | 'Menengah' | 'Ahli'>('Menengah');
@@ -288,7 +288,7 @@ export default function HomeScreen() {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
-    }, 4000);
+    }, 5000);
   };
 
   const handleToggleNotification = async () => {
@@ -308,13 +308,18 @@ export default function HomeScreen() {
       } else {
         // Mobile (Android/iOS) menggunakan expo-notifications
         try {
+          if (!Notifications) {
+            showToast("⚠️ Modul notifikasi tidak tersedia.");
+            return;
+          }
+
           const { status } = await Notifications.requestPermissionsAsync();
           if (status !== 'granted') {
             showToast("⚠️ Izin notifikasi ditolak oleh HP.");
             return;
           }
 
-          // Wajib membuat Notification Channel khusus Android agar tidak error
+          // Wajib membuat Notification Channel khusus Android
           if (Platform.OS === 'android') {
             await Notifications.setNotificationChannelAsync('default', {
               name: 'Workout Reminder',
@@ -325,9 +330,14 @@ export default function HomeScreen() {
             });
           }
 
-          const [hourStr, minuteStr] = reminderTime.split(':');
-          const workHour = parseInt(hourStr, 10);
-          const workMinute = parseInt(minuteStr, 10);
+          const parts = reminderTime.split(':');
+          const workHour = parseInt(parts[0], 10);
+          const workMinute = parseInt(parts[1], 10);
+
+          if (isNaN(workHour) || isNaN(workMinute) || workHour < 0 || workHour > 23 || workMinute < 0 || workMinute > 59) {
+            showToast("⚠️ Format jam salah! Gunakan format HH:MM (contoh 07:00).");
+            return;
+          }
 
           await Notifications.cancelAllScheduledNotificationsAsync();
 
@@ -340,7 +350,13 @@ export default function HomeScreen() {
                 body: `Sudah pukul ${reminderTime} WIB. Yuk semangat capai target V-Taper hari ini!`,
                 sound: true,
               },
-              trigger: { weekday, hour: workHour, minute: workMinute, repeats: true },
+              trigger: {
+                type: 'weekly',
+                channelId: 'default',
+                weekday: weekday,
+                hour: workHour,
+                minute: workMinute,
+              },
             });
           }
 
@@ -353,15 +369,21 @@ export default function HomeScreen() {
                 body: "Waktunya rest day, dilarang workout!! Nikmati istirahatmu.",
                 sound: true,
               },
-              trigger: { weekday, hour: 5, minute: 0, repeats: true },
+              trigger: {
+                type: 'weekly',
+                channelId: 'default',
+                weekday: weekday,
+                hour: 5,
+                minute: 0,
+              },
             });
           }
 
           setIsNotifActive(true);
           showToast("🔔 Pengingat HP & Rest Day Aktif Berulang Otomatis!");
-        } catch (error) {
+        } catch (error: any) {
           console.error("Gagal menjadwalkan notifikasi HP:", error);
-          showToast("❌ Gagal menyetel pengingat.");
+          showToast(`❌ Error: ${error?.message || "Gagal menyetel pengingat"}`);
         }
       }
     } else {
