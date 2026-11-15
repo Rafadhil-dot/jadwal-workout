@@ -18,6 +18,16 @@ if (Platform.OS !== 'web') {
   }
 }
 
+// Import AsyncStorage secara aman untuk penyimpanan HP
+let AsyncStorage: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    AsyncStorage = require('@react-native-async-storage/async-storage').default;
+  } catch (e) {
+    console.log("AsyncStorage not supported");
+  }
+}
+
 const workoutDataByLevel = {
   Pemula: {
     Senin: {
@@ -176,7 +186,7 @@ const workoutDataByLevel = {
   }
 };
 
-const STORAGE_KEY = 'jadwal_workout_data_v15';
+const STORAGE_KEY = 'jadwal_workout_data_v16';
 
 export default function HomeScreen() {
   const [selectedLevel, setSelectedLevel] = useState<'Pemula' | 'Menengah' | 'Ahli'>('Menengah');
@@ -202,12 +212,19 @@ export default function HomeScreen() {
   const workoutData = workoutDataByLevel[selectedLevel];
   const dayKeys = Object.keys(workoutData);
 
+  // Load data tersimpan saat aplikasi dibuka (Support Web & HP Android)
   useEffect(() => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const loadSavedData = async () => {
       try {
-        const savedData = window.localStorage.getItem(STORAGE_KEY);
-        if (savedData) {
-          const parsed = JSON.parse(savedData);
+        let savedDataStr = null;
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          savedDataStr = window.localStorage.getItem(STORAGE_KEY);
+        } else if (AsyncStorage) {
+          savedDataStr = await AsyncStorage.getItem(STORAGE_KEY);
+        }
+
+        if (savedDataStr) {
+          const parsed = JSON.parse(savedDataStr);
           if (parsed.completedDays) setCompletedDays(parsed.completedDays);
           if (parsed.reminderTime) setReminderTime(parsed.reminderTime);
           if (typeof parsed.isNotifActive === 'boolean') setIsNotifActive(parsed.isNotifActive);
@@ -230,8 +247,10 @@ export default function HomeScreen() {
       } catch (e) {
         console.error("Gagal memuat data lokal:", e);
       }
-    }
-    setIsLoaded(true);
+      setIsLoaded(true);
+    };
+
+    loadSavedData();
   }, []);
 
   // Timer pengecekan web notification real-time khusus platform web
@@ -240,7 +259,7 @@ export default function HomeScreen() {
 
     const interval = setInterval(() => {
       const currentTime = new Date();
-      const dayIndex = currentTime.getDay(); // 0 = Minggu, 6 = Sabtu
+      const dayIndex = currentTime.getDay(); 
       const hours = String(currentTime.getHours()).padStart(2, '0');
       const minutes = String(currentTime.getMinutes()).padStart(2, '0');
       const currentTimeStr = `${hours}:${minutes}`;
@@ -263,9 +282,11 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, [isNotifActive, reminderTime, lastNotifiedDate]);
 
+  // Simpan data otomatis setiap ada perubahan (Support Web & HP Android)
   useEffect(() => {
     if (!isLoaded) return;
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    
+    const saveData = async () => {
       try {
         const dataToSave = {
           completedDays,
@@ -277,11 +298,19 @@ export default function HomeScreen() {
           savedMonth: currentMonthName,
           savedYear: currentYearName
         };
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+        const jsonString = JSON.stringify(dataToSave);
+
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.localStorage.setItem(STORAGE_KEY, jsonString);
+        } else if (AsyncStorage) {
+          await AsyncStorage.setItem(STORAGE_KEY, jsonString);
+        }
       } catch (e) {
         console.error("Gagal menyimpan data lokal:", e);
       }
-    }
+    };
+
+    saveData();
   }, [completedDays, monthlyCount, yearlyCount, reminderTime, isNotifActive, selectedLevel, isLoaded, currentMonthName, currentYearName]);
 
   const showToast = (msg: string) => {
