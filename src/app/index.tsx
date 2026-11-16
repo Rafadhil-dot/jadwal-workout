@@ -28,6 +28,18 @@ if (Platform.OS !== 'web') {
   }
 }
 
+// Fungsi bantuan untuk mendapatkan ID unik minggu berjalan (tanggal hari Senin pada minggu ini)
+const getMondayWeekId = (date: Date): string => {
+  const d = new Date(date);
+  const day = d.getDay(); // 0 = Minggu, 1 = Senin, ..., 6 = Sabtu
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Geser ke hari Senin
+  d.setDate(diff);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const dayOfMonth = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${dayOfMonth}`;
+};
+
 const workoutDataByLevel = {
   Pemula: {
     Senin: {
@@ -186,7 +198,7 @@ const workoutDataByLevel = {
   }
 };
 
-const STORAGE_KEY = 'jadwal_workout_data_v16';
+const STORAGE_KEY = 'jadwal_workout_data_v17';
 
 export default function HomeScreen() {
   const [selectedLevel, setSelectedLevel] = useState<'Pemula' | 'Menengah' | 'Ahli'>('Menengah');
@@ -206,13 +218,14 @@ export default function HomeScreen() {
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   const now = new Date();
+  const currentWeekId = getMondayWeekId(now);
   const currentMonthName = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"][now.getMonth()];
   const currentYearName = now.getFullYear().toString();
 
   const workoutData = workoutDataByLevel[selectedLevel];
   const dayKeys = Object.keys(workoutData);
 
-  // Load data tersimpan saat aplikasi dibuka (Support Web & HP Android)
+  // Load data tersimpan saat aplikasi dibuka + Cek Auto-Reset Mingguan, Bulanan, Tahunan
   useEffect(() => {
     const loadSavedData = async () => {
       try {
@@ -225,21 +238,30 @@ export default function HomeScreen() {
 
         if (savedDataStr) {
           const parsed = JSON.parse(savedDataStr);
-          if (parsed.completedDays) setCompletedDays(parsed.completedDays);
           if (parsed.reminderTime) setReminderTime(parsed.reminderTime);
           if (typeof parsed.isNotifActive === 'boolean') setIsNotifActive(parsed.isNotifActive);
           if (parsed.selectedLevel) setSelectedLevel(parsed.selectedLevel);
 
+          // 1. Cek pergantian minggu (reset otomatis setiap hari Senin baru)
+          if (parsed.savedWeekId && parsed.savedWeekId !== currentWeekId) {
+            setCompletedDays({});
+            showToast("📅 Minggu baru (Senin) dimulai! Jadwal mingguan di-reset, progres bulanan & tahunan tetap tersimpan.");
+          } else if (parsed.completedDays) {
+            setCompletedDays(parsed.completedDays);
+          }
+
+          // 2. Cek pergantian bulan
           if (parsed.savedMonth && parsed.savedMonth !== currentMonthName) {
             setMonthlyCount(0);
-            setToastMessage(`📅 Memasuki bulan baru (${currentMonthName}), progres bulanan di-reset otomatis!`);
+            showToast(`📅 Memasuki bulan baru (${currentMonthName}), progres bulanan di-reset otomatis!`);
           } else if (typeof parsed.monthlyCount === 'number') {
             setMonthlyCount(parsed.monthlyCount);
           }
 
+          // 3. Cek pergantian tahun
           if (parsed.savedYear && parsed.savedYear !== currentYearName) {
             setYearlyCount(0);
-            setToastMessage(`🏆 Memasuki tahun baru (${currentYearName}), progres tahunan di-reset otomatis!`);
+            showToast(`🏆 Memasuki tahun baru (${currentYearName}), progres tahunan di-reset otomatis!`);
           } else if (typeof parsed.yearlyCount === 'number') {
             setYearlyCount(parsed.yearlyCount);
           }
@@ -295,6 +317,7 @@ export default function HomeScreen() {
           reminderTime,
           isNotifActive,
           selectedLevel,
+          savedWeekId: currentWeekId,
           savedMonth: currentMonthName,
           savedYear: currentYearName
         };
@@ -311,7 +334,7 @@ export default function HomeScreen() {
     };
 
     saveData();
-  }, [completedDays, monthlyCount, yearlyCount, reminderTime, isNotifActive, selectedLevel, isLoaded, currentMonthName, currentYearName]);
+  }, [completedDays, monthlyCount, yearlyCount, reminderTime, isNotifActive, selectedLevel, isLoaded, currentWeekId, currentMonthName, currentYearName]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -335,7 +358,6 @@ export default function HomeScreen() {
         setIsNotifActive(true);
         showToast(`🔔 Pengingat Web aktif! Workout pukul ${reminderTime} WIB, Rest Day pukul 05:00 WIB.`);
       } else {
-        // Mobile (Android/iOS) menggunakan expo-notifications
         try {
           if (!Notifications) {
             showToast("⚠️ Modul notifikasi tidak tersedia.");
@@ -348,7 +370,6 @@ export default function HomeScreen() {
             return;
           }
 
-          // Wajib membuat Notification Channel khusus Android
           if (Platform.OS === 'android') {
             await Notifications.setNotificationChannelAsync('default', {
               name: 'Workout Reminder',
@@ -438,7 +459,7 @@ export default function HomeScreen() {
     if (willBeCompleted) {
       setMonthlyCount(prev => prev + 1);
       setYearlyCount(prev => prev + 1);
-      showToast("🔥 Catatan harian tersimpan! Progres mingguan, bulanan & tahunan bertambah.");
+      showToast("🔥 Tersimpan ke progres mingguan, bulanan & tahunan!");
     } else {
       setMonthlyCount(prev => Math.max(0, prev - 1));
       setYearlyCount(prev => Math.max(0, prev - 1));
@@ -449,7 +470,7 @@ export default function HomeScreen() {
   const handleResetProgress = () => {
     if (activeTab === 'week') {
       setCompletedDays({});
-      showToast("🔄 Progres Mingguan di-reset!");
+      showToast("🔄 Progres Mingguan di-reset! (Data bulanan & tahunan tetap aman)");
     } else if (activeTab === 'month') {
       setMonthlyCount(0);
       showToast("🔄 Progres Bulanan di-reset!");
@@ -531,7 +552,7 @@ export default function HomeScreen() {
             <View style={styles.progressHeader}>
               <View>
                 <Text style={styles.progressTitle}>📊 Progres Minggu Ini ({selectedLevel})</Text>
-                <Text style={styles.progressSubtitle}>{weekCount} dari {dayKeys.length} hari tuntas</Text>
+                <Text style={styles.progressSubtitle}>{weekCount} dari {dayKeys.length} hari tuntas (Auto-reset tiap Senin)</Text>
               </View>
               <Text style={styles.progressPercent}>{weekPercent}%</Text>
             </View>
@@ -563,7 +584,7 @@ export default function HomeScreen() {
             <View style={styles.progressBarBg}>
               <View style={[styles.progressBarFill, { width: `${monthPercent}%` }]} />
             </View>
-            <Text style={styles.infoSubText}>Auto-reset aktif: Otomatis mereset saat berganti bulan.</Text>
+            <Text style={styles.infoSubText}>Akumulasi otomatis dari latihan mingguan (reset tiap awal bulan).</Text>
           </View>
         )}
 
@@ -579,13 +600,13 @@ export default function HomeScreen() {
             <View style={styles.progressBarBg}>
               <View style={[styles.progressBarFill, { width: `${yearPercent}%` }]} />
             </View>
-            <Text style={styles.infoSubText}>Auto-reset aktif: Otomatis mereset saat berganti tahun.</Text>
+            <Text style={styles.infoSubText}>Akumulasi otomatis sepanjang tahun (reset tiap 1 Januari).</Text>
           </View>
         )}
 
         <View style={styles.progressFooter}>
           <Text style={styles.motivationText}>
-            {activeTab === 'week' ? "Selesaikan jadwal harian di bawah!" : "Real-time calendar synced."}
+            {activeTab === 'week' ? "Otomatis reset tiap Senin, data tetap masuk bulanan!" : "Tersimpan permanen di memori HP."}
           </Text>
           <TouchableOpacity onPress={handleResetProgress} style={styles.resetButton}>
             <Text style={styles.resetButtonText}>Reset {activeTab === 'week' ? 'Minggu' : activeTab === 'month' ? 'Bulan' : 'Tahun'}</Text>
